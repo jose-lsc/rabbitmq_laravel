@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Console\Commands\RabbitMQCreateQueue;
 use App\Http\Controllers\Controller;
 use App\Models\Cliente;
+use App\Models\Conta;
 use App\RabbitMQ\Publishers\PublisherTransacao;
 use App\RabbitMQ\Subscribers\SubscriberTransacao;
 use App\Services\TransacaoService;
@@ -26,12 +27,21 @@ class TransacaoController extends Controller
     public function transacao(Request $request) {
 
         $valido = $request->validate([
-            "emissor_id" => 'required|integer',
+            "emissor_id" => 'required|integer|exists:clientes,id',
             "valor" => 'required|numeric|decimal:2',
         ]);
         $valido['chave_pix'] = $request->input('chave_pix');
         $valido['tipo'] = self::TRANSACAO;
+        $contaEmissor = Conta::where('chave_pix', $valido['chave_pix'])
+                          ->first();
 
+        
+        if (!$contaEmissor) {
+            return response()->json([
+                'retorno' => false,
+                'mensagem' => 'Chave Pix inválida para o cliente emissor.'
+            ], 400);
+        }
         Log::info('Transação iniciada e enviada ao publisher');
         
         $this->publisher->publish($valido, 10);

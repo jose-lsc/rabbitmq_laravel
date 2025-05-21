@@ -25,7 +25,7 @@ class EnvioNotificacaoEmail extends Mailable
     public function build() {
         Log::info("email enviado $this->transacao");
         return $this->subject("Transacao bancaria efetuada em sua conta")
-            ->html('dsadas');
+            ->html('Sua Transacao foi concluida!');
     }
 
 }
